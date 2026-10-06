@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { treeSites } from './farm-layout.js';
+import { buildFarmExpansion } from './farm-expansion.js';
 
 export function buildFarm(scene, helpers) {
   const {box,ball,cylinder,mesh,mat,world,label}=helpers;
@@ -9,7 +10,7 @@ export function buildFarm(scene, helpers) {
   const root=staticGroup;
   function beam(a,b,width,color,parent=root){const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),delta=end.clone().sub(start);const m=box(width,delta.length(),width,color,0,0,0,parent);m.position.copy(start.add(end).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());return m;}
   function patch(x,z,w,d,color='#7ca54b',y=.14){return box(w,.08,d,color,x,y,z,root);}
-  const outline=[[-15,-9],[-12,-11],[-5,-11.6],[7,-11.4],[14,-9.5],[16,-6],[16.5,3],[15,8.6],[10.5,11.3],[1,12],[-9,11.4],[-14,8],[-16,2],[-16,-5]];
+  const outline=[[-30,-20],[-25,-23],[-8,-24],[15,-24],[30,-21],[32,-12],[32,10],[28,22],[12,24],[-7,24],[-25,22],[-32,14],[-33,0],[-32,-13]];
   const shape=new THREE.Shape();outline.forEach(([x,z],i)=>i?shape.lineTo(x,-z):shape.moveTo(x,-z));shape.closePath();
   const land=mesh(new THREE.ExtrudeGeometry(shape,{depth:1.1,bevelEnabled:true,bevelSize:.32,bevelThickness:.2,bevelSegments:1,steps:1}),'#ae8550',root);land.rotation.x=-Math.PI/2;land.position.y=-1.18;
   const turf=mesh(new THREE.ExtrudeGeometry(shape,{depth:.13,bevelEnabled:true,bevelSize:.2,bevelThickness:.12,bevelSegments:1,steps:1}),'#8caf4e',root);turf.rotation.x=-Math.PI/2;turf.position.y=-.06;
@@ -65,14 +66,14 @@ export function buildFarm(scene, helpers) {
   patch(-11.2,-2.2,4.8,4.5,'#c8a867');enclosure(-11.2,-2.2,4.8,4.5,'#eee2b7');
   const coop=new THREE.Group();coop.position.set(-11.5,.75,-3.2);root.add(coop);box(1.7,1.2,1.3,'#dfba7c',0,.6,0,coop);roof(coop,1.7,1.3,1.2,.7,'#b9653d');box(.58,.65,.06,'#5d4930',0,.35,.68,coop);const ramp=box(.7,.06,1.5,'#a27a42',0,-.23,1.18,coop);ramp.rotation.x=-.3;for(let i=0;i<5;i++)box(.7,.04,.05,'#e1bd83',-11.5,.3+i*.1,-1.5-i*.25,root);trough(-9.8,-2.3,.8);
   const animals=[];
-  function animal(kind,x,z,angle=0){const g=new THREE.Group();g.position.set(x,.2,z);g.rotation.y=angle;root.add(g);const cow=kind==='cow',sheep=kind==='sheep',bird=kind==='chicken'||kind==='duck';
+  function animal(kind,x,z,angle=0,stationary=false){const g=new THREE.Group();g.position.set(x,.2,z);g.rotation.y=angle;root.add(g);const cow=kind==='cow',sheep=kind==='sheep',bird=kind==='chicken'||kind==='duck';
     if(bird){ball(.23,'#fff5da',0,.3,0,g,1,1.1,1.3);ball(.15,'#fff4d5',0,.56,.19,g);const beak=mesh(new THREE.ConeGeometry(.065,.16,5),'#e8aa38',g);beak.rotation.x=Math.PI/2;beak.position.set(0,.54,.36);ball(.015,'#473f30',-.065,.58,.3,g);ball(.015,'#473f30',.065,.58,.3,g);if(kind==='chicken')ball(.075,'#bd4933',0,.73,.17,g,.5,1,.8);for(const xx of [-.08,.08])cylinder(.02,.02,.17,'#ca963c',xx,.08,.05,g);}
     else{ball(cow?.58:.43,'#f1ead8',0,cow?.85:.65,0,g,cow?1.35:1.2,1,.85);for(const xx of [-.38,.38])for(const zz of [-.22,.22]){cylinder(.065,.07,cow?.58:.4,'#6c5840',xx,cow?.35:.26,zz,g);ball(.075,'#443d30',xx,.08,zz,g,1,.7,1.2);}
       ball(cow?.25:.19,cow?'#f4e9d4':'#76614b',.55,cow?.95:.74,.03,g,1.1,1.15,1);ball(cow?.22:.13,cow?'#e8b7a5':'#65523d',.72,cow?.8:.66,.13,g,1,.6,1.1);for(const zz of [-.2,.23])ball(.11,cow?'#f1e5ce':'#756049',.51,cow?1.1:.87,zz,g,1.2,.5,.7);ball(.025,'#3d382d',.7,cow?1.01:.8,.22,g);
       if(cow){for(const [xx,yy,zz] of [[-.35,.96,.41],[.13,.92,-.43],[.25,1.3,.07],[-.43,.83,-.4]])ball(.2,'#3e3b30',xx,yy,zz,g,1.5,.65,.8);for(const zz of [-.12,.16])cylinder(.035,.07,.17,'#bfa77b',.45,1.24,zz,g);}
       else for(let i=0;i<10;i++){const a=i*2.4;ball(.19,'#fff2dc',Math.cos(a)*.36,.7+(i%3)*.13,Math.sin(a)*.27,g);}
     }
-    g.userData.dynamic=true;animals.push({g,x,z,angle,kind});return g;
+    g.userData.dynamic=!stationary;if(!stationary)animals.push({g,x,z,angle,kind});return g;
   }
   animal('cow',8,-2.8,.5);animal('cow',10,-2.2,-.5);animal('sheep',12.2,.1,.4);animal('sheep',13.8,.6,-.3);
   for(let i=0;i<6;i++)animal('chicken',-12.7+(i%3)*1.05,-1.8+Math.floor(i/3)*1.1,i);
@@ -107,6 +108,7 @@ export function buildFarm(scene, helpers) {
   const cart=new THREE.Group();cart.position.set(-.5,.25,9);cart.rotation.y=-.35;root.add(cart);box(1.3,.13,.8,'#996c3a',0,.4,0,cart);box(1.3,.43,.08,'#bd9055',0,.65,-.44,cart);for(const x of [-.72,.72]){box(.1,.45,.85,'#bd9055',x,.65,0,cart);const wheel=mesh(new THREE.TorusGeometry(.27,.045,6,10),'#634d2c',cart);wheel.position.set(x,.26,0);wheel.rotation.y=Math.PI/2;for(let i=0;i<4;i++){const spoke=box(.03,.5,.03,'#8f703e',x,.26,0,cart);spoke.rotation.x=i*Math.PI/4;}beam([x*.5,.42,.1],[x*.5,.42,1.55],.065,'#916c3a',cart);}box(.85,.5,.6,'#e5b847',0,.72,0,cart);
   const leaves=[];for(let i=0;i<20;i++){const [x,z]=world(530+(i*31)%105,365+(i*27)%98);const m=ball(.09,i%2?'#b79545':'#937139',x,.19,z,root,1.5,.2,.65);m.rotation.y=i;m.userData.dynamic=true;leaves.push(m);}
   label('Rice paddy',-5.8,.2,8.3);label('Crew house',homePoint[0],.2,homePoint[1]+.85);label('Barn',4.5,.2,-3.75);label('Orchard',-12,.2,6);
+  buildFarmExpansion({root,box,ball,cylinder,mesh,mat,beam,path,enclosure,field,tree,animal,house,shelter,hay,barrel,trough,flower,lantern});
   root.updateMatrixWorld(true);
   const batches=new Map();const originals=[];
   root.traverse(object=>{if(!object.isMesh||object.material.transparent)return;let parent=object;while(parent&&parent!==root){if(parent.userData.dynamic)return;parent=parent.parent;}const key=object.geometry.uuid+object.material.uuid;if(!batches.has(key))batches.set(key,[]);batches.get(key).push(object);});

@@ -6,7 +6,7 @@ try {
   const page=await browser.newPage({viewport:{width:375,height:700}});
   await page.clock.install();
   await page.addInitScript(()=>localStorage.setItem('crew-crop-v1',JSON.stringify({time:15,rice:7,wood:3,leaves:2,crops:Array.from({length:12},(_,i)=>({x:260+i%4*49,y:365+Math.floor(i/4)*43,age:45})),trees:[{x:695,y:300,age:60},{x:775,y:335,age:-1},{x:820,y:420,age:20}],agents:['Dale','Rosie','Hank'].map((name,i)=>({name,x:440+i*55,y:290,job:'stop',state:'Resting',work:0,done:2,bubble:'',bubbleUntil:0})),log:['Saved work'],diary:['Saved diary']})));
-  await page.goto('http://127.0.0.1:3000');
+  await page.goto(process.env.TEST_URL || 'http://127.0.0.1:3000');
   await page.locator('#reset').scrollIntoViewIfNeeded();
   await page.clock.runFor(6500);
   const s=await page.evaluate(()=>JSON.parse(localStorage.getItem('crew-crop-v1')));

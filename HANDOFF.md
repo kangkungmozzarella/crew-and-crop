@@ -87,3 +87,7 @@ Later versions, one social post each: random events (rain, pests, surprise guest
 - Side view or slight top-down for the 2D art?
 - Can the player also plant and harvest by hand, or only give orders and watch?
 - Should the market be part of this game later, or a separate project?
+
+## Accepted direction, 6 October 2026
+
+The owner chose a large 3D farm and accepted real tasks visualized as farming work. The implementation now separates scripted farm chores from a persisted three-stage task workflow: Dale plans, Rosie drafts, Hank checks. Completed drafts require owner approval before entering the result barn. Revisions return to Rosie and Hank. Backend stage status drives task activity; animation and farm speed never finish tasks. Claude integration is server-side; this workspace currently has no API key, so the active mode is explicitly dry run. This direction supersedes the original 2D art questions above.

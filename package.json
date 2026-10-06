@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node scripts/vendor.mjs && node server.js",
     "test": "node tests/game.mjs",
-    "postinstall": "node scripts/vendor.mjs"
+    "postinstall": "node scripts/vendor.mjs",
+    "test:workflow": "node tests/workflow.mjs"
   },
   "engines": {
     "node": ">=22"
