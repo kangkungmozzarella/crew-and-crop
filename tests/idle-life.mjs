@@ -9,9 +9,9 @@ try {
   const errors=[];const initial=seed(),page=await pageWith(initial);page.on('pageerror',e=>errors.push(e.message));
   await page.clock.runFor(7000);let s=await saved(page);
   s.agents.forEach((a,i)=>{assert(a.isIdle);assert(Math.hypot(a.x-initial.agents[i].x,a.y-initial.agents[i].y)>5);assert.equal(a.job,initial.agents[i].job);assert.equal(a.done,0);});assert.equal(s.rice,0);assert.equal(s.wood,0);
-  await page.locator('#order-2').fill('stop');await page.locator('.member').nth(2).locator('form button').click();const stopped=(await saved(page)).agents[2];await page.clock.runFor(6500);s=await saved(page);assert.equal(s.agents[2].x,stopped.x);assert.equal(s.agents[2].y,stopped.y);assert.equal(s.agents[2].state,'Resting');
+  await page.locator('#order-2').fill('stop');await page.locator('.member').nth(2).locator('form button').click();await page.locator('#feedback').filter({hasText:'Hank will stop'}).waitFor();const stopped=(await saved(page)).agents[2];await page.clock.runFor(6500);s=await saved(page);assert.equal(s.agents[2].x,stopped.x);assert.equal(s.agents[2].y,stopped.y);assert.equal(s.agents[2].state,'Resting');
   await page.locator('#pause').click();const clock=await page.locator('#clock').innerText();await page.clock.runFor(2000);assert.equal(await page.locator('#clock').innerText(),clock);await page.locator('#pause').click();
-  await page.clock.runFor(60000);s=await saved(page);assert(s.rice>0,'ripe crops interrupt idle and are harvested');assert.equal(s.agents[0].job,'harvest');
+  await page.clock.runFor(80000);s=await saved(page);assert(s.rice>0,'ripe crops interrupt idle and are harvested');assert.equal(s.agents[0].job,'harvest');
   const full=await pageWith(seed(0,80));await full.clock.runFor(7000);s=await saved(full);assert.equal(s.rice,80);assert.equal(s.agents[0].done,0);assert(s.agents[0].isIdle);assert.equal(s.agents[0].job,'harvest');await full.close();
   const night=await pageWith(seed(185));await night.clock.runFor(7000);s=await saved(night);assert(s.agents.every(a=>a.state==='Sleeping at home'));await night.close();assert.deepEqual(errors,[]);
   console.log('PASS: idle movement, retained orders, no fake output, work resumption, stop, pause, full barn and night priority. Gameplay tested independently of the renderer.');

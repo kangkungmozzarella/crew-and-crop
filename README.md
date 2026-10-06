@@ -1,6 +1,6 @@
 # Crew & Crop
 
-A small farming-game prototype inspired by Hay Day. Dale harvests rice, Rosie sweeps leaves, and Hank chops trees. Give standing orders and watch them repeat. This version uses original Three.js 3D models and **dry-run rules with scripted dialogue**. A server-side Claude adapter supports collaborative text tasks; without an API key the workflow uses clearly labeled samples.
+A small farming-game prototype inspired by Hay Day. Dale harvests rice, Rosie sweeps leaves, and Hank chops trees. Give standing orders and watch them repeat. This version uses original Three.js 3D models. Claude turns plain-English orders into standing rules and writes the crew's diary; without an API key, a clearly labelled dry run uses keyword matching and scripted lines.
 
 ## Run
 
@@ -19,9 +19,9 @@ Drag to rotate the farm, scroll to zoom, or use two fingers to zoom and pan. Cam
 
 ## Play
 
-Give the crew `Harvest rice, sweep the yard and chop mature trees`. Individual orders accept one job: `harvest`, `sweep`, `chop`, `plant`, `wander` or `stop`. Unsupported phrases leave the current job unchanged. Crops ripen in 60 simulation seconds, a day lasts four minutes, and the crew sleeps at night. Use Pause or Speed to control the clock. Harvest ripe rice manually with the button below the farm. Send Hank a planting order to replace stumps.
+Give the crew an order in plain English, or give one farmer their own. In dry run, use the job words: `Harvest rice, sweep the yard and chop mature trees`; individual orders need exactly one of `harvest`, `sweep`, `chop`, `plant`, `wander` or `stop`. Unsupported orders leave the current job unchanged. Crops ripen in 60 simulation seconds, a day lasts four minutes, and the crew sleeps at night. Use Pause or Speed to control the clock. Harvest ripe rice manually with the button below the farm. Send Hank a planting order to replace stumps.
 
-The barn holds 80 items total. At capacity, collection waits; selling and barn expansion are not implemented. Progress, standing orders and scripted diaries are saved in this browser. Reset farm asks before deleting the saved farm. No synchronization, pathfinding around buildings, shared-tool negotiation, coffee detours or real model planning is implemented yet.
+The barn holds 80 items total. At capacity, collection waits. **Sell at the stall** sells everything at 2 coins per rice and 4 per wood; barn expansion is not implemented. Progress, standing orders and diaries are saved in this browser. Reset farm asks before deleting the saved farm. Harvested rice and felled wood are carried first and hauled to the barn in the farm's single wheelbarrow, three items per trip. No synchronization, pathfinding around buildings or coffee detours are implemented yet.
 
 ## Checks
 
@@ -29,7 +29,7 @@ With Playwright and Chromium available, run `npm test` while the server is runni
 
 ## Next
 
-Extend the text task workflow with explicit tool integrations and obstacle-aware travel. The game keeps control of stock, positions and timers; agent results require owner review.
+Barn expansion paid with coins, animals that produce goods, a market town where AI traders haggle with each other, viewers voting on events, and obstacle-aware travel. The game keeps control of stock, positions and timers.
 
 The 3D renderer uses [Three.js](https://threejs.org/docs/) and its OrbitControls. The dependency license is copied to `public/vendor/THREE-LICENSE.txt` during installation.
 
@@ -49,16 +49,30 @@ Use **Explore the farm** to switch between Whole farm, Farmyard & crew, Western 
 
 Run `node tests/farm-areas.mjs` with the server running to check all district views, camera controls, keyboard, paused navigation, image changes and responsive layouts. District screenshots go to `artifacts/farm-large-*.png`. `node tests/idle-life.mjs` checks idle and standing-order behaviour independently of the renderer.
 
-## Agent tasks and the result barn
+## How the AI works
 
-Give the crew a goal in **Put the crew to work**, together with facts and constraints. Dale produces a plan, Rosie uses that plan to draft the deliverable, and Hank checks the draft. Open **View task** or a farmer's **View agent task** to inspect each handoff. Clicking a farmer in the 3D view opens the task too.
+**AI understands, decides and talks. The game engine moves, counts and keeps time.**
 
-Only a running backend stage makes its farmer work at the task field. Farm time, speed and harvest animations cannot complete an agent task. **Pause** pauses the farm simulation; backend tasks continue. The scripted chore controls are a separate sandbox.
+Each order goes to the server once. In live mode, Claude turns it into a standing rule for each agent it concerns: one of the jobs the game supports (`harvest`, `sweep`, `chop`, `plant`, `wander`, `stop`, or `keep` the current one) plus a short reply in that agent's voice. A crew order such as "Get the farm tidy before guests arrive" is split across Dale, Rosie and Hank. The game then repeats those rules on its own clock; the model is not polled. At the end of each farm day, a smaller model writes one or two diary lines per agent from the day's real job counts and what happened.
 
-Hank's result waits for owner review. Request a revision to send it back through Rosie and Hank, or approve it to store it in **Result barn**. Approved results can be read and downloaded. Questions and failed stages offer an answer or manual retry. A server restart interrupts a running request and requires a manual retry. Goals, stage outputs, revisions and approvals persist locally in `data/projects.json`; do not delete that file unless you intend to erase task history.
+The model is also called when a standing rule cannot handle a situation. The game describes it and offers the valid options; the model picks one and writes a short exchange between the agents involved, which plays out as speech bubbles:
 
-By default, missing API credentials select **dry run**. Every sample output is labeled; dry run demonstrates the workflow without producing actual AI deliverables. To enable Claude, copy `.env.example` to `.env`, set `ANTHROPIC_API_KEY`, change `WORKFLOW_MODE` to `live`, and restart `npm start`. Keep the key in `.env`; never put it in public files. Each stage sends the goal, context and previous handoffs to Anthropic. Revisions make additional requests. Existing dry-run projects stay dry run after configuration changes.
+- **Fallen tree.** From day 2, wind knocks a tree across the paddy path each morning, or use **Knock a tree onto the path**. Whoever needs to cross stops and decides: ask someone to clear it (Hank is twice as fast with his axe) or drag it aside alone.
+- **Wheelbarrow.** When one agent needs the wheelbarrow while another is using it, they settle it: wait, keep working and haul later, or carry the load by hand at half speed. The choice holds for 45 farm seconds.
+- **Full barn.** When the barn fills and harvesters still have work, they choose to wait, sweep, plant or rest.
+- **Rain.** Rice grows 1.5× faster and more leaves fall; the crew keeps working or shelters by the barn until it passes.
+- **Crows.** Crows land on the paddy and eat up to four plots after 25 farm seconds unless someone chases them off; the crew picks who goes, or leaves them.
+- **Guests.** Guests arrive 30 farm seconds after notice. The crew sweeps together, leaves it to Rosie, or carries on; fewer leaves in the yard earn a bigger tip (2, 8 or 15 coins).
+- **Trader.** A trader offers random prices. The crew sells everything, sells half, declines, or haggles for one coin more on each; the game, not the model, decides whether the trader accepts.
 
-The live adapter uses the [Anthropic Messages API](https://platform.claude.com/docs/en/api/messages/create). These agents produce and check text; they have no browsing, file execution or publishing tools. Supplied facts and owner review remain necessary. API errors and truncated outputs stop the stage rather than silently accepting a partial result.
+From day 2 the game schedules these by time of day: a fallen tree in the morning, a trader around midday, and up to two random slots for rain, crows or guests. **Make something happen** starts any of them on demand.
 
-Verification: `npm run test:workflow` checks orchestration and a mocked Claude adapter without paid requests. `TEST_URL=http://127.0.0.1:3011 node tests/workflow-browser.mjs` checks the UI against an isolated dry-run server; use a temporary `WORKFLOW_DATA_FILE` when testing to keep personal task data separate.
+When two idle agents meet, they may chat: two to four lines grounded in what happened today, written by the diary model. At most two chats happen per farm day.
+
+Only one problem is settled at a time. If the server cannot be reached, the game uses its default option and says so in the notebook.
+
+The model never changes stock, growth or positions, and its output is validated against a JSON schema and the list of crew members and jobs. Orders it cannot map to a job keep the agent's current rule, and the agent says why. Every reply and diary line is labelled with the model that wrote it, or `dry run`.
+
+Without an API key, the game runs in **dry run**: orders are matched by keyword and replies and diaries are scripted. To enable Claude, copy `.env.example` to `.env`, set `ANTHROPIC_API_KEY`, change `CREW_MODE` to `live`, and restart `npm start`. `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`) reads orders; `ANTHROPIC_CHAT_MODEL` (default `claude-haiku-4-5`) writes the diary. Each order, problem, chat and diary is one request; orders, current jobs and farm counts are sent to Anthropic. The key stays on the server. Orders on Sonnet 5.5 use Anthropic's server-side refusal fallback.
+
+Verification: `npm run test:brain` checks dry-run parsing, events, the live request shape and output validation with a fake client; it makes no paid calls. `node tests/crew-events.mjs` (server running) plays every problem, the stall sale and an idle chat through in the browser. Live provider behaviour is unverified until a key is configured.

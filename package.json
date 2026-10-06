@@ -6,12 +6,13 @@
     "start": "node scripts/vendor.mjs && node server.js",
     "test": "node tests/game.mjs",
     "postinstall": "node scripts/vendor.mjs",
-    "test:workflow": "node tests/workflow.mjs"
+    "test:brain": "node tests/crew-brain.mjs"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "three": "^0.186.1"
   }
 }

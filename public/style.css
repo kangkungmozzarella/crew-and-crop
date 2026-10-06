@@ -4,3 +4,7 @@
 .world-label.place{display:none}.viewport{background:#cbe1e7}#world-labels .world-label.person{background:#f7f2e6cf;font-size:11px;padding:2px 5px}
 
 .camera-area{display:flex;align-items:center;gap:12px;margin:14px 0 6px}.camera-area label{margin:0}.camera-area select{font:inherit;background:#fffdf7;color:var(--ink);border:1px solid #969980;min-height:44px;padding:8px 12px;border-radius:4px;max-width:100%}.camera-area select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}@media(max-width:560px){.camera-area{display:block}.camera-area label{margin-bottom:6px}.camera-area select{width:100%}}
+.farm-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:560px){.farm-bottom{flex-wrap:wrap}.farm-actions{justify-content:flex-start}}
+.farm-events{display:flex;align-items:center;gap:12px;margin:0 0 10px;flex-wrap:wrap}.farm-events label{margin:0}.farm-events select{font:inherit;background:#fffdf7;color:var(--ink);border:1px solid #969980;min-height:44px;padding:8px 12px;border-radius:4px;max-width:100%}.farm-events select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media(max-width:560px){.farm-events label{flex-basis:100%}.farm-events select{flex:1}}

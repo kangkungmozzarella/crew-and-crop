@@ -44,3 +44,21 @@ This validates the dry-run 3D prototype. Real AI, obstacle-aware paths, coffee h
 - Purpose gate PASS: task lists and a reading dialog serve task inspection/review; typography and colors follow DESIGN.md. No new decorative effects.
 - Liveliness PASS: existing ENERGY 3 / RHYTHM 2 / MOTION 2 and the large 3D farm remain the focal point; farm motion follows waiting or actual backend activity, and reduced-motion handling is retained.
 - Craftsmanship PASS: output is readable as ordinary wrapped text, actions persist through the server, results require approval, and `git diff --check` passes. UI task testing and renderer testing are recorded separately above.
+
+## AI orders and diary, 6 October 2026
+
+- Removed the document task workflow so the project no longer duplicates Kantor Kita. Order handling moved to the server: one request per order, schema-validated rules, replies labelled with their source. Removing the per-session `sandboxMode` flag also fixes standing orders being ignored after a reload.
+- `npm run test:brain` passes dry-run orders and diary, live request shape (JSON schema output, effort, fallback only on supported models), assignment validation, refusal and unreadable output. No paid calls; live behaviour is unverified without a key.
+- Against a dry-run server on port 3011: `tests/game.mjs`, `tests/idle-life.mjs`, `tests/farm-areas.mjs`, `tests/preview.mjs` and `tests/layout-migration.mjs` pass.
+
+## Crew problems and conversations, 6 October 2026
+
+- Added three game-raised problems settled through `/api/events`: fallen tree (help request), shared wheelbarrow (negotiation) and full barn. The game supplies the situation and valid options with the default first; the server restricts the model's choice and speakers to those offered, and the game applies the result. Harvests and wood are now carried and hauled to the barn with one wheelbarrow.
+- `npm run test:brain` passes, including event option and speaker limits and diary happenings. No paid calls.
+- Against a dry-run server on port 3011: `tests/crew-events.mjs` (all three problems, lines and applied choices), `tests/game.mjs`, `tests/idle-life.mjs` (harvest wait extended to 80 s for hauling), `tests/layout-migration.mjs`, `tests/preview.mjs` and `tests/farm-areas.mjs` pass. WebGL screenshots show the fallen tree on the path and the wheelbarrow; the 375 px layout has no overflow.
+
+## Coins, happenings and idle chats, 6 October 2026
+
+- Added coins, a farm stall and a trader whose prices and haggling outcome come from the game. Rain, crows and guests are game-scheduled from day 2 or started with **Make something happen**; each asks the model to choose among game-offered options. Idle agents who meet may chat (two per farm day, chat model). Temporary decisions (shelter, tidying for guests) override standing orders only until they expire.
+- `npm run test:brain` passes, including chats and trader options. No paid calls.
+- Against a dry-run server on port 3011: `tests/crew-events.mjs` (tree, wheelbarrow, full barn, rain, crows, guests, trader, stall, chat), `tests/game.mjs`, `tests/idle-life.mjs`, `tests/layout-migration.mjs`, `tests/preview.mjs` and `tests/farm-areas.mjs` pass. WebGL screenshots show rain, crows over the paddy, guests and the trader's cart.
