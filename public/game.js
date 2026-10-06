@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 import { createFarmView } from './farm3d.js';
 import { treeSites } from './farm-layout.js';
+import { idleDestination } from './idle-life.js';
 let view;
 try { view = createFarmView($('farm')); } catch (error) { $('view-message').textContent = '3D view could not start. Enable WebGL in your browser, then reload. Farm orders remain available.'; console.error(error); }
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -23,15 +24,16 @@ $('speed').onclick=()=>{speed=speed===1?3:1;$('speed').textContent=`Speed: ${spe
 function collect(c,a){if(state.rice+state.wood>=80){if(a)a.state='Barn full. Waiting for space.';return false;}state.rice++;c.age=0;if(a){a.done++;a.bubble='Harvest stored. Replanting!';a.bubbleUntil=state.time+4;}return true;}
 $('harvest').onclick=()=>{let count=0;for(const c of state.crops)if(c.age>=60&&collect(c))count++;note(count?`You harvested ${count} rice and replanted the paddy.`:'No harvest collected. Rice must be ripe and the barn must have space.');save();};
 $('reset').onclick=()=>{if(!confirm('Reset this farm and its saved orders?'))return;state=defaults();save();location.reload();};
-function targetFor(a){if(a.job==='harvest')return state.crops.find(c=>c.age>=60);if(a.job==='chop')return state.trees.find(t=>t.age>=60);if(a.job==='plant')return state.trees.find(t=>t.age<0);if(a.job==='sweep'&&state.leaves>0)return{x:565,y:410};return null;}
+function targetFor(a){if(state.rice+state.wood>=80&&['harvest','chop'].includes(a.job))return null;if(a.job==='harvest')return state.crops.find(c=>c.age>=60);if(a.job==='chop')return state.trees.find(t=>t.age>=60);if(a.job==='plant')return state.trees.find(t=>t.age<0);if(a.job==='sweep'&&state.leaves>0)return{x:565,y:410};return null;}
 function update(dt){const beforeDay=Math.floor(state.time/240);state.time+=dt;for(const c of state.crops)c.age=Math.min(60,c.age+dt);for(const t of state.trees)if(t.age>=0)t.age=Math.min(60,t.age+dt*.25);if(Math.floor(state.time/9)>Math.floor((state.time-dt)/9))state.leaves=Math.min(20,state.leaves+1);
  const phase=state.time%240, night=phase>=180;
  if(Math.floor(state.time/240)>beforeDay){state.diary=state.agents.map(a=>`${a.name}, day ${beforeDay+1}: ${a.done} jobs finished. ${a.name==='Dale'?'Coffee made the work sweeter.':a.name==='Rosie'?'There is always another leaf.':'Tomorrow, remember the saplings.'} (scripted diary)`);state.agents.forEach(a=>a.done=0);note(`Day ${beforeDay+2}: a new morning on the farm.`);}
- for(const a of state.agents){a.moving=false;let task=night?{x:445,y:170}:targetFor(a);if(!task&&a.job==='wander'&&!night){if(!a.target||Math.hypot(a.x-a.target.x,a.y-a.target.y)<4)a.target={x:390+Math.random()*260,y:270+Math.random()*230};task=a.target;}
+ for(const a of state.agents){a.moving=false;let task=night?{x:445,y:170}:targetFor(a);a.isIdle=!night&&!task&&a.job!=='stop';if(a.isIdle){task=idleDestination(a,state.time);a.work=0;}else{delete a.idleUntil;}
   if(!task){a.state=a.job==='stop'?'Resting':({harvest:'Waiting for ripe rice',chop:'Waiting for mature trees',plant:'All trees are planted',sweep:'The yard is clean',wander:'Exploring'})[a.job];a.work=0;continue;}
   const dx=task.x-a.x,dy=task.y-a.y,d=Math.hypot(dx,dy);a.moving=d>5;
-  if(d>5){let amount=Math.min(d,dt*65);a.x+=dx/d*amount;a.y+=dy/d*amount;a.state=night?'Walking home':`Walking to ${a.job==='harvest'?'the rice':a.job==='sweep'?'the yard':a.job==='wander'?'a quiet spot':'the trees'}`;a.work=0;}
+  if(d>5){let amount=Math.min(d,dt*65);a.x+=dx/d*amount;a.y+=dy/d*amount;a.state=night?'Walking home':a.isIdle?'Strolling between jobs':`Walking to ${a.job==='harvest'?'the rice':a.job==='sweep'?'the yard':'the trees'}`;a.work=0;}
   else if(night){a.state='Sleeping at home';a.moving=false;}
+  else if(a.isIdle){a.idleUntil ??= state.time+7;a.state=task.label+(state.rice+state.wood>=80&&['harvest','chop'].includes(a.job)?' · barn full':'');}
   else{a.state={harvest:'Harvesting rice',sweep:'Sweeping leaves',chop:'Chopping a tree',plant:'Planting a sapling',wander:'Exploring'}[a.job];a.work+=dt;if(a.work>=2){a.work=0;if(a.job==='harvest')collect(task,a);if(a.job==='sweep'){state.leaves=Math.max(0,state.leaves-1);a.done++;}if(a.job==='chop'){if(state.rice+state.wood<80){state.wood++;task.age=-1;a.done++;note(`${a.name} stored wood. A stump needs replanting.`);}else a.state='Barn full. Waiting for space.';}if(a.job==='plant'){task.age=0;a.done++;note(`${a.name} planted a sapling.`);}}}
  }
  if(state.time-savedAt>5){savedAt=state.time;save();}
