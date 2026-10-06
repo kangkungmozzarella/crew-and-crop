@@ -1,0 +1,16 @@
+{
+  "name": "crew-and-crop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/vendor.mjs && node server.js",
+    "test": "node tests/game.mjs",
+    "postinstall": "node scripts/vendor.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}
