@@ -76,3 +76,7 @@ The model never changes stock, growth or positions, and its output is validated 
 Without an API key, the game runs in **dry run**: orders are matched by keyword and replies and diaries are scripted. To enable Claude, copy `.env.example` to `.env`, set `ANTHROPIC_API_KEY`, change `CREW_MODE` to `live`, and restart `npm start`. `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`) reads orders; `ANTHROPIC_CHAT_MODEL` (default `claude-haiku-4-5`) writes the diary. Each order, problem, chat and diary is one request; orders, current jobs and farm counts are sent to Anthropic. The key stays on the server. Orders on Sonnet 5.5 use Anthropic's server-side refusal fallback.
 
 Verification: `npm run test:brain` checks dry-run parsing, events, the live request shape and output validation with a fake client; it makes no paid calls. `node tests/crew-events.mjs` (server running) plays every problem, the stall sale and an idle chat through in the browser. Live provider behaviour is unverified until a key is configured.
+
+## License
+
+[MIT](LICENSE) © 2026 Kangkung Mozzarella. Three.js is MIT-licensed by its authors; see `public/vendor/THREE-LICENSE.txt` after installation.
